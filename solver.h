@@ -16,14 +16,12 @@ class SOLVER
 
    private:
       double     dt;
-      double    *L2Norm;
-      double    *LInfNorm;
       char      *stepType;
-      MESHBLOCK *mb;
-      SOLNBLOCK *sb;
+      // MESHBLOCK *mb;
+      // SOLNBLOCK *sb;
    public:
       // basic constructor
-      SOLVER(MESHBLOCK *mbin, SOLNBLOCK *sbin); 
+      SOLVER(); 
       // {
       //    mb = mbin;sb=sbin;
       //    stepType = sb->scheme;

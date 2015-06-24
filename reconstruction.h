@@ -16,7 +16,7 @@ namespace RECONSTRUCTION
 // MUSCL RECONSTRUCTION
 //
 // ##################################################################
-   extern void MUSCL(double **f,
+   extern void MUSCL(double **flux,
                double **ql,
                double **qr,
                double **f2,

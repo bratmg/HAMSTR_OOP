@@ -13,7 +13,7 @@ namespace RECONSTRUCTION
 // MUSCL RECONSTRUCTION
 //
 // ##################################################################
-   void MUSCL(double **f,
+   void MUSCL(double **flux,
                double **ql,
                double **qr,
                double **f2,
@@ -38,8 +38,8 @@ namespace RECONSTRUCTION
          {
             for(i=is;i<=ie;i++)
             {
-               ql[i][n]=f[i][n];
-               qr[i][n]=f[i][n];
+               ql[i][n]=flux[i][n];
+               qr[i][n]=flux[i][n];
             }
          }
          return;
@@ -53,7 +53,7 @@ namespace RECONSTRUCTION
       for(n = 0; n < nq; n++)
       {
          for(i=0;i<im;i++)
-            f2[i][n] = f[i+1][n]-f[i][n];
+            f2[i][n] = flux[i+1][n]-flux[i][n];
 
          for(i=is;i<=ie;i++)
          {
@@ -63,8 +63,8 @@ namespace RECONSTRUCTION
             a2       = 2.0*(f2i-f2i1)*(f2i-f2i1) + a1;
             f3i      =  a1/a2 ;
             f3qt     = qt*f3i;
-            ql[i][n] = f[i][n]+f3qt*( thm*f2i1 + thp*f2i );
-            qr[i][n] = f[i][n]-f3qt*( thp*f2i1 + thm*f2i );
+            ql[i][n] = flux[i][n]+f3qt*( thm*f2i1 + thp*f2i );
+            qr[i][n] = flux[i][n]-f3qt*( thp*f2i1 + thm*f2i );
          } // i loop
       } // n loop
    }

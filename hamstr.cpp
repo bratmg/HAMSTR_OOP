@@ -42,14 +42,14 @@ void HAMSTR::readInputs(int myid)
    // not done in HAMSTR constructor as variables
    // necessary for memory allocation within SOLVERs
    // constructor are not available prior to this point
-   solv = new SOLVER(mb,sb);
+   solv = new SOLVER[1];
 
    cout << " [done]\n";
 }
 
-// ==================================================================
-// preprocess
-// ==================================================================
+// // ==================================================================
+// // preprocess
+// // ==================================================================
 
 void HAMSTR::preprocessor(void)
 {
@@ -65,9 +65,9 @@ void HAMSTR::preprocessor(void)
 
 }
 
-// ==================================================================
-// step solution for marching in time
-// ==================================================================
+// // ==================================================================
+// // step solution for marching in time
+// // ==================================================================
 
 void HAMSTR::marchInTime(void)
 {

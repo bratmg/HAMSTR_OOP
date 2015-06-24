@@ -6,6 +6,8 @@
 #include "solver.h"
 #include "triSolvers.h"
 
+using namespace CODEVARS;
+
 using TRISOLVER::blockTridag;
 using TRISOLVER::blockTridagPeriodic;
 using TRISOLVER::blockTridag4;
@@ -37,24 +39,24 @@ void SOLVER::ADI(void)
    // one loop per chain to evaluate fluxes
    // on all the faces in the chain
    //
-   for(i = 0; i < mb->nCell; i++)
+   for(i = 0; i < nCell; i++)
    {
-      dtfac = sb->CFL/sb->sigma[i];
+      dtfac = CFL/sigma[i];
       for(m = 0; m < NQ; m++)
       {
-         sb->r[NQ*i+m]  *= dtfac;
-         sb->r0[NQ*i+m]  = sb->r[NQ*i+m];
-         sb->dq[NQ*i+m]  = ZERO;
+         r[NQ*i+m]  *= dtfac;
+         r0[NQ*i+m]  = r[NQ*i+m];
+         dq[NQ*i+m]  = ZERO;
       }
    }
 
 // ==================================================================
 // Perform multiple sweeps and loop through all the chains
 // ==================================================================  
-   worksize = mb->nMaxChain+5;
-   for(isweep = 0; isweep < sb->msweep; isweep++)
+   worksize = nMaxChain+5;
+   for(isweep = 0; isweep < msweep; isweep++)
    {
-      for(i = 0; i < mb->nChain; i++)
+      for(i = 0; i < nChain; i++)
       {
          //
          // zero out block matrices
@@ -62,17 +64,17 @@ void SOLVER::ADI(void)
          for(m = 0; m < worksize; m++)
             for(k = 0; k < NQ; k++)
             {
-               sb->F[m][k]=0;
+               F[m][k]=0;
                for(j = 0; j < NQ; j++)
-                  sb->A[m][k][j] = sb->B[m][k][j] = sb->C[m][k][j] = ZERO;
+                  A[m][k][j] = B[m][k][j] = C[m][k][j] = ZERO;
             }
     
          //
          // collect cells on the loop
          // 
-         f1        = mb->faceStartPerChain[i];
-         f2        = mb->faceStartPerChain[i+1];
-         iPeriodic = (mb->chainConn[f1]==mb->chainConn[f2-1]); // test for periodicity 
+         f1        = faceStartPerChain[i];
+         f2        = faceStartPerChain[i+1];
+         iPeriodic = (chainConn[f1]==chainConn[f2-1]); // test for periodicity 
         
          m=0;
          chainSize = (f2-iPeriodic-f1);
@@ -84,17 +86,17 @@ void SOLVER::ADI(void)
 
          for(f = f1; f < f2-iPeriodic; f++)
          {
-            iface     = mb->chainConn[f];
-            leftCell  = mb->faces[(NFACE+2)*iface + FNODE    ];
-            rightCell = mb->faces[(NFACE+2)*iface + FNODE + 2];
+            iface     = chainConn[f];
+            leftCell  = faces[(NFACE+2)*iface + FNODE    ];
+            rightCell = faces[(NFACE+2)*iface + FNODE + 2];
             // 
             // construct left and right matrices for this face
             //
             for(j = 0; j < NQ; j++)
                for(k = 0; k < NQ; k++)
                {
-                  lmat[j][k] = (sb->ff[iface]).lmat[j][k];
-                  rmat[j][k] = (sb->ff[iface]).rmat[j][k];
+                  lmat[j][k] = (ff[iface]).lmat[j][k];
+                  rmat[j][k] = (ff[iface]).rmat[j][k];
                }
 
             //
@@ -108,12 +110,12 @@ void SOLVER::ADI(void)
                {
                   for(k = 0; k < NQ; k++)
                   {
-                     sb->B[m  ][j][k] += (lmat[j][k]);
-                     sb->B[mm1][j][k] -= (rmat[j][k]);
-                     sb->A[m  ][j][k] += (rmat[j][k]);
-                     sb->C[mm1][j][k] -= (lmat[j][k]);
+                     B[m  ][j][k] += (lmat[j][k]);
+                     B[mm1][j][k] -= (rmat[j][k]);
+                     A[m  ][j][k] += (rmat[j][k]);
+                     C[mm1][j][k] -= (lmat[j][k]);
                   }
-                  sb->F[m][j] = sb->r[NQ*leftCell+j];
+                  F[m][j] = r[NQ*leftCell+j];
                }
             }
             //
@@ -126,15 +128,15 @@ void SOLVER::ADI(void)
                {
 
 #ifdef Dim3 /* three-dimensional space */
-                  a1 = mb->refMtx[iface][0][0]; 
-                  b1 = mb->refMtx[iface][0][1];
-                  c1 = mb->refMtx[iface][0][2];
-                  a2 = mb->refMtx[iface][1][0];
-                  b2 = mb->refMtx[iface][1][1];
-                  c2 = mb->refMtx[iface][1][2];
-                  a3 = mb->refMtx[iface][2][0];
-                  b3 = mb->refMtx[iface][2][1];
-                  c3 = mb->refMtx[iface][2][2];
+                  a1 = refMtx[iface][0][0]; 
+                  b1 = refMtx[iface][0][1];
+                  c1 = refMtx[iface][0][2];
+                  a2 = refMtx[iface][1][0];
+                  b2 = refMtx[iface][1][1];
+                  c2 = refMtx[iface][1][2];
+                  a3 = refMtx[iface][2][0];
+                  b3 = refMtx[iface][2][1];
+                  c3 = refMtx[iface][2][2];
 
                
                   for (j = 0; j < NQ; j++)
@@ -148,10 +150,10 @@ void SOLVER::ADI(void)
                      rmat[j][3]=a3*r01+b3*r02+c3*r03;
                   }
 #else /* two-dimensional space */
-                  a1 = mb->refMtx[iface][0][0]; 
-                  b1 = mb->refMtx[iface][0][1];
-                  a2 = mb->refMtx[iface][1][0];
-                  b2 = mb->refMtx[iface][1][1];
+                  a1 = refMtx[iface][0][0]; 
+                  b1 = refMtx[iface][0][1];
+                  a2 = refMtx[iface][1][0];
+                  b2 = refMtx[iface][1][1];
                
                   for (j = 0; j < NQ; j++)
                   {
@@ -172,19 +174,19 @@ void SOLVER::ADI(void)
                {
                   for(k = 0; k < NQ; k++)
                   {
-                     sb->B[m][j][k] += (lmat[j][k]);
+                     B[m][j][k] += (lmat[j][k]);
                      if (mm1 > -1 && rightCell > -1)
                      {
-                       sb->A[m][j][k]   += (rmat[j][k]);
-                       sb->B[mm1][j][k] -= (rmat[j][k]);
-                       sb->C[mm1][j][k] -= (lmat[j][k]);
+                       A[m][j][k]   += (rmat[j][k]);
+                       B[mm1][j][k] -= (rmat[j][k]);
+                       C[mm1][j][k] -= (lmat[j][k]);
                      }
                      else
                      {
-                       if (rightCell==-2) sb->B[m][j][k] += (rmat[j][k]);
+                       if (rightCell==-2) B[m][j][k] += (rmat[j][k]);
                      }
                   }
-                  sb->F[m][j]=sb->r[NQ*leftCell+j];
+                  F[m][j]=r[NQ*leftCell+j];
                }
             } // iPeriodic     
             m++;
@@ -199,20 +201,20 @@ void SOLVER::ADI(void)
 
          for(f = f1; f < f2-1; f++)
          {
-            iface    = mb->chainConn[f];    
-            leftCell = mb->faces[(NFACE+2)*iface+FNODE];
-            dtfac    = sb->CFL/sb->sigma[leftCell];
+            iface    = chainConn[f];    
+            leftCell = faces[(NFACE+2)*iface+FNODE];
+            dtfac    = CFL/sigma[leftCell];
 
             for(j = 0;j < NQ; j++)
                for(k=0; k < NQ; k++)
                {
-                  sb->A[m][j][k] *= dtfac;
-                  sb->B[m][j][k] *= dtfac;
-                  sb->C[m][j][k] *= dtfac;
+                  A[m][j][k] *= dtfac;
+                  B[m][j][k] *= dtfac;
+                  C[m][j][k] *= dtfac;
                }
 
             // add the Identity matrix
-            for(j = 0; j < NQ; j++) sb->B[m][j][j] += 1.0;
+            for(j = 0; j < NQ; j++) B[m][j][j] += 1.0;
             m++;
          }
 
@@ -220,11 +222,11 @@ void SOLVER::ADI(void)
          // invert using appropriate banded block solver
          //
 #ifdef Dim3  /* three-dimensional space */
-         if (iPeriodic==1) blockTridagPeriodic(sb->A,sb->B,sb->C,sb->F,chainSize,NQ);
-         if (iPeriodic==0) blockTridag(sb->A,sb->B,sb->C,sb->F,chainSize,NQ);
+         if (iPeriodic==1) blockTridagPeriodic(A,B,C,F,chainSize,NQ);
+         if (iPeriodic==0) blockTridag(A,B,C,F,chainSize,NQ);
 #else  /* two-dimensional space */
-         if (iPeriodic==1) blockTridagPeriodic4(sb->A,sb->B,sb->C,sb->F,chainSize,NQ);
-         if (iPeriodic==0) blockTridag4(sb->A,sb->B,sb->C,sb->F,chainSize,NQ);
+         if (iPeriodic==1) blockTridagPeriodic4(A,B,C,F,chainSize,NQ);
+         if (iPeriodic==0) blockTridag4(A,B,C,F,chainSize,NQ);
 #endif
          //
          // reassign values back at the unknown locations
@@ -232,20 +234,20 @@ void SOLVER::ADI(void)
          m = 0;
          for(f = f1; f < f2-1; f++)
          {
-            iface    = mb->chainConn[f];
-            leftCell = mb->faces[(NFACE+2)*iface+FNODE];
+            iface    = chainConn[f];
+            leftCell = faces[(NFACE+2)*iface+FNODE];
 
             for(j = 0; j < NQ; j++)
             {
-               sb->r[NQ*leftCell+j] = sb->F[m][j];
+               r[NQ*leftCell+j] = F[m][j];
             }
 
             m++;
          }      
       } // nchains loop
 
-      ntotal = mb->nCell*NQ;   
-      for(i = 0; i < ntotal; i++) sb->dq[i] += sb->r[i];
+      ntotal = nCell*NQ;   
+      for(i = 0; i < ntotal; i++) dq[i] += r[i];
 
       computeLinearRHS();
 
@@ -256,10 +258,10 @@ void SOLVER::ADI(void)
 // ==================================================================
 
    m = 0;
-   for(i = 0; i < mb->nCell; i++)
+   for(i = 0; i < nCell; i++)
       for(j = 0;j < NQ; j++)
       {
-         sb->q[m] += sb->dq[m];
+         q[m] += dq[m];
          m++;
       }
 

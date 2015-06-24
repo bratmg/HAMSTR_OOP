@@ -7,6 +7,8 @@
 //
 // ##################################################################
 #include "solver.h"
+
+using namespace CODEVARS;
 // ##################################################################
 
 void SOLVER::initFlow(void)
@@ -19,45 +21,45 @@ void SOLVER::initFlow(void)
    //
    // basic property initialization
    //
-   sb->gamma    = 1.4;
-   sb->gm1      = sb->gamma - 1.;
-   sb->invGamma = 1./sb->gamma;
-   sb->pr       = 0.72;
-   sb->prtr     = THIRD;
-   sb->rinf     = ONE;
-   sb->pinf     = ONE/sb->gamma;
+   Gamma    = 1.4;
+   gm1      = Gamma - 1.;
+   invGamma = 1./Gamma;
+   pr       = 0.72;
+   prtr     = THIRD;
+   rinf     = ONE;
+   pinf     = ONE/Gamma;
 
-   sb->rey = sb->rey/sb->Mach;
+   rey = rey/Mach;
 
    // set number of ghost cells
-   sb->nGhost = 2;                    // MUSCL/WENO3
-   if(sb->order == 5) sb->nGhost = 3; // WENO5
+   nGhost = 2;                    // MUSCL/WENO3
+   if(order == 5) nGhost = 3; // WENO5
 
    // error checking
-   if (sb->test != 0)
+   if (test != 0)
    {
-      cout << " HAMSTR: Particular test condition("<<sb->test<<
+      cout << " HAMSTR: Particular test condition("<<test<<
          ") not yet implemented.\n";
       exit(1);
    }   
    // Mach scaled velocities
-   if (sb->test == 0)
+   if (test == 0)
    {
 #ifdef Dim3
-      sb->uinf = sb->Mach*cos(sb->alpha*DEG2RAD)*cos(sb->beta*DEG2RAD);
-      sb->vinf = sb->Mach*cos(sb->alpha*DEG2RAD)*sin(sb->beta*DEG2RAD);
-      sb->winf = sb->Mach*sin(sb->alpha*DEG2RAD);
+      uinf = Mach*cos(alpha*DEG2RAD)*cos(beta*DEG2RAD);
+      vinf = Mach*cos(alpha*DEG2RAD)*sin(beta*DEG2RAD);
+      winf = Mach*sin(alpha*DEG2RAD);
 #else
-      sb->uinf = sb->Mach*cos(sb->alpha*DEG2RAD);
-      sb->vinf = sb->Mach*sin(sb->alpha*DEG2RAD);
+      uinf = Mach*cos(alpha*DEG2RAD);
+      vinf = Mach*sin(alpha*DEG2RAD);
 #endif
    }      
    // energy
-   sb->einf = sb->pinf/(sb->gm1) + HALF*sb->rinf*
-              (sb->uinf*sb->uinf + sb->vinf*sb->vinf);
+   einf = pinf/(gm1) + HALF*rinf*
+              (uinf*uinf + vinf*vinf);
 #ifdef Dim3   
-   sb->einf = sb->pinf/(sb->gm1) + HALF*sb->rinf*(sb->uinf*sb->uinf + 
-              sb->vinf*sb->vinf + sb->winf*sb->winf);
+   einf = pinf/(gm1) + HALF*rinf*(uinf*uinf + 
+              vinf*vinf + winf*winf);
 #endif
    
   
@@ -65,27 +67,27 @@ void SOLVER::initFlow(void)
    // Far-field BC
    //
    m = 0;
-   for (i = 0; i < mb->nCell; i++)
+   for (i = 0; i < nCell; i++)
    {
-      sb->q[m]  = sb->rinf;            
-      sb->qt[m] = sb->q[m];
+      q[m]  = rinf;            
+      qt[m] = q[m];
       m++;
-      sb->q[m]  = sb->rinf*sb->uinf;
-      sb->qt[m] = sb->q[m];
+      q[m]  = rinf*uinf;
+      qt[m] = q[m];
       m++;
-      sb->q[m]  = sb->rinf*sb->vinf;
-      sb->qt[m] = sb->q[m];
+      q[m]  = rinf*vinf;
+      qt[m] = q[m];
       m++;
 
 #ifdef Dim3
-      sb->q[m]  = sb->rinf*sb->winf;
-      sb->qt[m] = sb->q[m];
+      q[m]  = rinf*winf;
+      qt[m] = q[m];
       m++;      
 #endif
 
       // E*rho
-      sb->q[m]  = sb->einf;
-      sb->qt[m] = sb->q[m];
+      q[m]  = einf;
+      qt[m] = q[m];
       m++;
 
    }

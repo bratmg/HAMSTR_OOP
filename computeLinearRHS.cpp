@@ -7,6 +7,8 @@
 #include "reconstruction.h"
 // ##################################################################
 
+using namespace CODEVARS;
+
 using RECONSTRUCTION::MUSCL_DERIV;
 using RECONSTRUCTION::WENO_DERIV;
 // ##################################################################
@@ -28,7 +30,7 @@ void SOLVER::computeLinearRHS(void)
    double drightState[NQ];
    double consVar[NQ];
    double dqvar[NQ];
-   double flux[NQ];
+   double fluxLocal[NQ];
    double specRadius;
    double faceVel=0.;
    double dsnorm;
@@ -41,25 +43,25 @@ void SOLVER::computeLinearRHS(void)
    //
    // add diagonal term to the linear residual
    //
-   ntotal = mb->nCell*NQ;
-   for(i = 0; i < ntotal; i++) sb->r[i] = (sb->r0[i] - sb->dq[i]);
+   ntotal = nCell*NQ;
+   for(i = 0; i < ntotal; i++) r[i] = (r0[i] - dq[i]);
 
 // ==================================================================
 // one loop per chain to evaluate fluxes
 // on all the faces in the chain
 // ==================================================================
 
-   for(i = 0; i < mb->nChain; i++)
+   for(i = 0; i < nChain; i++)
    {
       iflag = 0;
-      f1    = mb->faceStartPerChain[i  ];
-      f2    = mb->faceStartPerChain[i+1];
-      m     = sb->nGhost;
+      f1    = faceStartPerChain[i  ];
+      f2    = faceStartPerChain[i+1];
+      m     = nGhost;
       //
       for(f = f1; f < f2; f++)
       {
-         iface       = mb->chainConn[f];
-         mb->cindx[m] = mb->faces[(NFACE+2)*iface+FNODE];
+         iface       = chainConn[f];
+         cindx[m] = faces[(NFACE+2)*iface+FNODE];
          m++;
       }
 
@@ -68,7 +70,7 @@ void SOLVER::computeLinearRHS(void)
 // a contigous array to help with cache
 // ==================================================================
 
-      if (mb->chainConn[f1] == mb->chainConn[f2-1])
+      if (chainConn[f1] == chainConn[f2-1])
       {
          //
          // this is a closed chain
@@ -76,15 +78,15 @@ void SOLVER::computeLinearRHS(void)
          //
          iflag         =  0;
          f             =  f1+1;
-         iface         =  mb->chainConn[f];
-         mb->cindx[m]  =  mb->faces[(NFACE+2)*iface+FNODE];
+         iface         =  chainConn[f];
+         cindx[m]  =  faces[(NFACE+2)*iface+FNODE];
          m++;
          chainSize     =  m;
          m             =  0;
-         for(f = f2-sb->nGhost-1; f < f2-1; f++)
+         for(f = f2-nGhost-1; f < f2-1; f++)
          {
-            iface       = mb->chainConn[f];
-            mb->cindx[m] = mb->faces[(NFACE+2)*iface+FNODE];
+            iface       = chainConn[f];
+            cindx[m] = faces[(NFACE+2)*iface+FNODE];
             m++;
          } // f loop
       }
@@ -96,36 +98,36 @@ void SOLVER::computeLinearRHS(void)
          // ghost cells
          //
          iflag = 1;
-         if(sb->test!=1)
+         if(test!=1)
          {
-            if(sb->order==5) 
+            if(order==5) 
             {
                m--;
-               mb->cindx[m] = -mb->cindx[m];
+               cindx[m] = -cindx[m];
                m++;
-               mb->cindx[m] = -mb->cindx[m-3];
+               cindx[m] = -cindx[m-3];
                m++;
-               mb->cindx[m] = -mb->cindx[m-5];
+               cindx[m] = -cindx[m-5];
 
                chainSize = m+1;
                m = 0;
-               mb->cindx[m] = -mb->cindx[m+5];
+               cindx[m] = -cindx[m+5];
                m = 1;
-               mb->cindx[m] = -mb->cindx[m+3];
+               cindx[m] = -cindx[m+3];
                m = 2;
-               mb->cindx[m] = -mb->cindx[m+1];
+               cindx[m] = -cindx[m+1];
             }
             else
             {
                m--;
-               mb->cindx[m]=-mb->cindx[m];
+               cindx[m]=-cindx[m];
                m++;
-               mb->cindx[m]=-mb->cindx[m-3];
+               cindx[m]=-cindx[m-3];
                chainSize=m+1;
                m=0;
-               mb->cindx[m]=-mb->cindx[m+3];
+               cindx[m]=-cindx[m+3];
                m=1;
-               mb->cindx[m]=-mb->cindx[m+1];
+               cindx[m]=-cindx[m+1];
             }
 
 
@@ -147,35 +149,35 @@ void SOLVER::computeLinearRHS(void)
 // ==================================================================
       for(j = 0; j <chainSize; j++)
       {
-         icell = mb->cindx[j];
-         if (icell >=0 ||(icell==0&&j==sb->nGhost)||(icell==0&&j==chainSize-sb->nGhost-1)) 
+         icell = cindx[j];
+         if (icell >=0 ||(icell==0&&j==nGhost)||(icell==0&&j==chainSize-nGhost-1)) 
          {
             m = NQ*icell;
             for(k = 0;k < NQ; k++)
             {
-               consVar[k] = sb->q[m];
-               dqvar[k]   = sb->dq[m];
+               consVar[k] = q[m];
+               dqvar[k]   = dq[m];
                m++;
 
-               sb->f[j][k]  = consVar[k];
-               sb->df[j][k] = dqvar[k];
+               flux[j][k]  = consVar[k];
+               df[j][k] = dqvar[k];
                   
             }
 
          }
 
-         if(icell<0||(icell==0&&j==sb->nGhost-1)||(icell==0&&j==chainSize-sb->nGhost))// icell < 0
+         if(icell<0||(icell==0&&j==nGhost-1)||(icell==0&&j==chainSize-nGhost))// icell < 0
          {
             //
             // operate on ghost cells
             // based on whether they are on the solid boundary or not
             //
-            if (j < sb->nGhost) 
-               iface=mb->chainConn[f1  ];
+            if (j < nGhost) 
+               iface=chainConn[f1  ];
             else 
-               iface=mb->chainConn[f2-1];
+               iface=chainConn[f2-1];
 
-            rightCell = mb->faces[(NFACE+2)*iface+(FNODE+2)];
+            rightCell = faces[(NFACE+2)*iface+(FNODE+2)];
 
             if (rightCell == -2)  /* this is a face on solid wall */
             {
@@ -183,50 +185,50 @@ void SOLVER::computeLinearRHS(void)
                m     = NQ*icell;
                for(k = 0;k < NQ; k++)
                {
-                  consVar[k] = sb->q[m];
-                  dqvar[k]   = sb->dq[m];
+                  consVar[k] = q[m];
+                  dqvar[k]   = dq[m];
                   m++;
                }
 
 #ifdef Dim3 /* three-dimensional space */         
-               sb->f[j][0]   =   consVar[0];
-               sb->f[j][1]   =  (consVar[1]*mb->refMtx[iface][0][0]
-                             +   consVar[2]*mb->refMtx[iface][0][1]
-                             +   consVar[3]*mb->refMtx[iface][0][2]);
-               sb->f[j][2]   =  (consVar[1]*mb->refMtx[iface][1][0]
-                             +   consVar[2]*mb->refMtx[iface][1][1]
-                             +   consVar[3]*mb->refMtx[iface][1][2]);
-               sb->f[j][3]   =  (consVar[1]*mb->refMtx[iface][2][0]
-                             +   consVar[2]*mb->refMtx[iface][2][1]
-                             +   consVar[3]*mb->refMtx[iface][2][2]);
-               sb->f[j][4]   =   consVar[4];       
+               flux[j][0]   =   consVar[0];
+               flux[j][1]   =  (consVar[1]*refMtx[iface][0][0]
+                             +   consVar[2]*refMtx[iface][0][1]
+                             +   consVar[3]*refMtx[iface][0][2]);
+               flux[j][2]   =  (consVar[1]*refMtx[iface][1][0]
+                             +   consVar[2]*refMtx[iface][1][1]
+                             +   consVar[3]*refMtx[iface][1][2]);
+               flux[j][3]   =  (consVar[1]*refMtx[iface][2][0]
+                             +   consVar[2]*refMtx[iface][2][1]
+                             +   consVar[3]*refMtx[iface][2][2]);
+               flux[j][4]   =   consVar[4];       
 
-               sb->df[j][0]  =   dqvar[0];
-               sb->df[j][1]  =  (dqvar[1]*mb->refMtx[iface][0][0]
-                             +   dqvar[2]*mb->refMtx[iface][0][1]
-                             +   dqvar[3]*mb->refMtx[iface][0][2]);
-               sb->df[j][2]  =  (dqvar[1]*mb->refMtx[iface][1][0]
-                             +   dqvar[2]*mb->refMtx[iface][1][1]
-                             +   dqvar[3]*mb->refMtx[iface][1][2]);
-               sb->df[j][3]  =  (dqvar[1]*mb->refMtx[iface][2][0]
-                             +   dqvar[2]*mb->refMtx[iface][2][1]
-                             +   dqvar[3]*mb->refMtx[iface][2][2]);
+               df[j][0]  =   dqvar[0];
+               df[j][1]  =  (dqvar[1]*refMtx[iface][0][0]
+                             +   dqvar[2]*refMtx[iface][0][1]
+                             +   dqvar[3]*refMtx[iface][0][2]);
+               df[j][2]  =  (dqvar[1]*refMtx[iface][1][0]
+                             +   dqvar[2]*refMtx[iface][1][1]
+                             +   dqvar[3]*refMtx[iface][1][2]);
+               df[j][3]  =  (dqvar[1]*refMtx[iface][2][0]
+                             +   dqvar[2]*refMtx[iface][2][1]
+                             +   dqvar[3]*refMtx[iface][2][2]);
 
-               sb->df[j][4]  =   dqvar[4];         
+               df[j][4]  =   dqvar[4];         
 #else /* two-dimensional space */
-               sb->f[j][0]   =   consVar[0];
-               sb->f[j][1]   =  (consVar[1]*mb->refMtx[iface][0][0]
-                             +   consVar[2]*mb->refMtx[iface][0][1]);
-               sb->f[j][2]   =  (consVar[1]*mb->refMtx[iface][1][0]
-                             +   consVar[2]*mb->refMtx[iface][1][1]);
-               sb->f[j][3]   =   consVar[3];         
+               flux[j][0]   =   consVar[0];
+               flux[j][1]   =  (consVar[1]*refMtx[iface][0][0]
+                             +   consVar[2]*refMtx[iface][0][1]);
+               flux[j][2]   =  (consVar[1]*refMtx[iface][1][0]
+                             +   consVar[2]*refMtx[iface][1][1]);
+               flux[j][3]   =   consVar[3];         
 
-               sb->df[j][0]  =   dqvar[0];
-               sb->df[j][1]  =  (dqvar[1]*mb->refMtx[iface][0][0]
-                             +   dqvar[2]*mb->refMtx[iface][0][1]);
-               sb->df[j][2]  =  (dqvar[1]*mb->refMtx[iface][1][0]
-                             +   dqvar[2]*mb->refMtx[iface][1][1]);
-               sb->df[j][3]  =   dqvar[3]; 
+               df[j][0]  =   dqvar[0];
+               df[j][1]  =  (dqvar[1]*refMtx[iface][0][0]
+                             +   dqvar[2]*refMtx[iface][0][1]);
+               df[j][2]  =  (dqvar[1]*refMtx[iface][1][0]
+                             +   dqvar[2]*refMtx[iface][1][1]);
+               df[j][3]  =   dqvar[3]; 
 
 #endif              
             }
@@ -241,33 +243,33 @@ void SOLVER::computeLinearRHS(void)
             } 
             else //this is for far field bc. 
             {
-               if(sb->test==1) 
+               if(test==1) 
                {
                   printf("Periodic bc has a problem!\n");
                   exit(1);
                } 
 #ifdef Dim3 /* three-dimensional space */
-               sb->f[j][0]  =  sb->rinf;
-               sb->f[j][1]  =  sb->rinf*sb->uinf;
-               sb->f[j][2]  =  sb->rinf*sb->vinf;
-               sb->f[j][3]  =  sb->rinf*sb->winf;
-               sb->f[j][4]  =  sb->einf;
+               flux[j][0]  =  rinf;
+               flux[j][1]  =  rinf*uinf;
+               flux[j][2]  =  rinf*vinf;
+               flux[j][3]  =  rinf*winf;
+               flux[j][4]  =  einf;
 
-               sb->df[j][0] = ZERO;
-               sb->df[j][1] = ZERO;
-               sb->df[j][2] = ZERO;
-               sb->df[j][3] = ZERO;
-               sb->df[j][4] = ZERO;
+               df[j][0] = ZERO;
+               df[j][1] = ZERO;
+               df[j][2] = ZERO;
+               df[j][3] = ZERO;
+               df[j][4] = ZERO;
 #else /* two-dimensional space */
-               sb->f[j][0]  =  sb->rinf;
-               sb->f[j][1]  =  sb->rinf*sb->uinf;
-               sb->f[j][2]  =  sb->rinf*sb->vinf;
-               sb->f[j][3]  =  sb->einf;
+               flux[j][0]  =  rinf;
+               flux[j][1]  =  rinf*uinf;
+               flux[j][2]  =  rinf*vinf;
+               flux[j][3]  =  einf;
 
-               sb->df[j][0] = ZERO;
-               sb->df[j][1] = ZERO;
-               sb->df[j][2] = ZERO;
-               sb->df[j][3] = ZERO;
+               df[j][0] = ZERO;
+               df[j][1] = ZERO;
+               df[j][2] = ZERO;
+               df[j][3] = ZERO;
 #endif               
             }
       
@@ -278,57 +280,57 @@ void SOLVER::computeLinearRHS(void)
 // ==================================================================
 // Find reconstruction derivatives along each loop
 // ==================================================================
-      is  = sb->nGhost-1;
+      is  = nGhost-1;
       ie  = chainSize-1;
       th  = THIRD;
       qt  = 0.25;
-      if (sb->order==1) qt=0.0;
+      if (order==1) qt=0.0;
       eps = 1e-10;
       
-      if(sb->order==1 || sb->order==3)
-         MUSCL_DERIV(sb->f,sb->dql,sb->dqr,sb->f2,sb->df,is,ie,th,qt,eps,chainSize,NQ);
+      if(order==1 || order==3)
+         MUSCL_DERIV(flux,dql,dqr,flux2,df,is,ie,th,qt,eps,chainSize,NQ);
     
-      if(sb->order==5) 
-         WENO_DERIV(sb->f,sb->dql,sb->dqr,sb->df,is,ie,eps,chainSize,NQ); //5th weno
+      if(order==5) 
+         WENO_DERIV(flux,dql,dqr,df,is,ie,eps,chainSize,NQ); //5th weno
 
       n         = is;
-      iPeriodic = (mb->chainConn[f1]==mb->chainConn[f2-1]);
+      iPeriodic = (chainConn[f1]==chainConn[f2-1]);
 
       for(f = f1; f < f2-iPeriodic; f++)
       {
-         iface     = mb->chainConn[f];
-         leftCell  = mb->faces[(NFACE+2)*iface + FNODE    ];
-         rightCell = mb->faces[(NFACE+2)*iface + FNODE + 2];
+         iface     = chainConn[f];
+         leftCell  = faces[(NFACE+2)*iface + FNODE    ];
+         rightCell = faces[(NFACE+2)*iface + FNODE + 2];
 
          for(m = 0; m < NQ; m++)
          {
             if (f == f2-iPeriodic-1 && iPeriodic==0) 
             {
-               dleftState[m]  = sb->dql[n  ][m];
-               drightState[m] = sb->dqr[n+1][m];
+               dleftState[m]  = dql[n  ][m];
+               drightState[m] = dqr[n+1][m];
             }
             else
             {
-               dleftState[m]  = sb->dqr[n+1][m];
-               drightState[m] = sb->dql[n  ][m];
+               dleftState[m]  = dqr[n+1][m];
+               drightState[m] = dql[n  ][m];
             }
          }
          //
          for(j = 0; j < NQ; j++)
          {
-            flux[j] = 0; 
+            fluxLocal[j] = 0; 
             for(k = 0;k < NQ; k++)
             {
-               flux[j] += (((sb->ff[iface]).lmat[j][k]*dleftState[k])+
-                           ((sb->ff[iface]).rmat[j][k]*drightState[k]));
+               fluxLocal[j] += (((ff[iface]).lmat[j][k]*dleftState[k])+
+                           ((ff[iface]).rmat[j][k]*drightState[k]));
             }
          }
          //
          m     = NQ*leftCell;
-         dtfac = sb->CFL/sb->sigma[leftCell];
+         dtfac = CFL/sigma[leftCell];
          for(j = 0; j < NQ; j++)
          {
-            sb->r[m] -= (flux[j]*dtfac);
+            r[m] -= (fluxLocal[j]*dtfac);
 
             m++;
          }
@@ -336,10 +338,10 @@ void SOLVER::computeLinearRHS(void)
          if (rightCell > -1) 
          {
             m=NQ*rightCell;
-            dtfac = sb->CFL/sb->sigma[rightCell];
+            dtfac = CFL/sigma[rightCell];
             for(j = 0; j < NQ; j++)
             {
-               sb->r[m] += (flux[j]*dtfac);
+               r[m] += (fluxLocal[j]*dtfac);
                m++;
             }
          } 
@@ -351,21 +353,21 @@ void SOLVER::computeLinearRHS(void)
 // Compute the residual norms
 // ==================================================================
 
-   sb->LInfNorm = sb->L2Norm = ZERO;
+   LInfNorm = L2Norm = ZERO;
 
-   for (i = 0; i < mb->nCell; i++)
+   for (i = 0; i < nCell; i++)
    {
-      dbletemp = fabs(sb->r[NQ*i]);
+      dbletemp = fabs(r[NQ*i]);
 
       
-      if (sb->LInfNorm < dbletemp)
+      if (LInfNorm < dbletemp)
       {
-         sb->LInfNorm = dbletemp;
+         LInfNorm = dbletemp;
       }
 
-      sb->L2Norm  += sb->r[NQ*i]*sb->r[NQ*i];
+      L2Norm  += r[NQ*i]*r[NQ*i];
    } // i loop
-   sb->L2Norm = sqrt(sb->L2Norm)/mb->nCell;
+   L2Norm = sqrt(L2Norm)/nCell;
 
 
 }

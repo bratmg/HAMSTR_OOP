@@ -8,6 +8,8 @@
 #include "solnBlock.h"
 #include "hamstr.h"
 #include "solver.h"
+
+using namespace CODEVARS;
 // ##################################################################
 
 void SOLNBLOCK::readSolutionInputs(void)
@@ -415,31 +417,31 @@ void SOLVER::basicScreenOutput(void)
    printf("                       GRID RELATED OUTPUTS                           \n");
    printf("======================================================================\n");
    printf("\n");
-   printf(" Number of nodes            %d\n",mb->nNode);
-   printf(" Number of cells            %d\n",mb->nCell);
-   printf(" Number of faces            %d\n",mb->nFace);
-   printf(" Number of colours          %d\n",mb->nColor);
-   printf(" Number of chains           %d\n",mb->nChain);
-   printf(" Number of chain faces      %d\n",mb->nChainFace);
-   printf(" Maximum length of chain    %d\n",mb->nMaxChain);
-   printf(" Minimum cell volume        %0.8e\n",mb->volmin);
-   printf(" Maximum cell volume        %0.8e\n",mb->volmax);
+   printf(" Number of nodes            %d\n",nNode);
+   printf(" Number of cells            %d\n",nCell);
+   printf(" Number of faces            %d\n",nFace);
+   printf(" Number of colours          %d\n",nColor);
+   printf(" Number of chains           %d\n",nChain);
+   printf(" Number of chain faces      %d\n",nChainFace);
+   printf(" Maximum length of chain    %d\n",nMaxChain);
+   printf(" Minimum cell volume        %0.8e\n",volmin);
+   printf(" Maximum cell volume        %0.8e\n",volmax);
    printf("\n");
    printf("======================================================================\n");
    printf("                  SOLVER AND FLOW RELATED OUTPUTS                     \n");
    printf("======================================================================\n");
    printf("\n");
-   printf(" Mach number                %0.8e\n",sb->Mach);
-   printf(" Alpha                      %0.8e\n",sb->alpha);
-   printf(" Beta                       %0.8e\n",sb->beta);
-   printf(" U infinity                 %0.8e\n",sb->uinf);
-   printf(" V infinity                 %0.8e\n",sb->vinf);
-   printf(" Beta                       %0.8e\n",sb->beta);
-   printf(" CFL number                 %0.8e\n",sb->CFL);
-   printf(" Number of steps            %d\n",sb->nsteps);
-   printf(" Time marching scheme       %s\n",sb->scheme);
-   printf(" Time integration scheme    %s\n",sb->timeInteg);
-   printf(" Reconstruction accuracy    %d\n",sb->order);
+   printf(" Mach number                %0.8e\n",Mach);
+   printf(" Alpha                      %0.8e\n",alpha);
+   printf(" Beta                       %0.8e\n",beta);
+   printf(" U infinity                 %0.8e\n",uinf);
+   printf(" V infinity                 %0.8e\n",vinf);
+   printf(" Beta                       %0.8e\n",beta);
+   printf(" CFL number                 %0.8e\n",CFL);
+   printf(" Number of steps            %d\n",nsteps);
+   printf(" Time marching scheme       %s\n",scheme);
+   printf(" Time integration scheme    %s\n",timeInteg);
+   printf(" Reconstruction accuracy    %d\n",order);
 
    printf("\n");
    printf("======================================================================\n");

@@ -11,8 +11,6 @@
 // ##################################################################
 int main(int argc, char **argv)
 {
-   traces(FIGURE OUT sol_visc);
-   traces(FLUX AS FUNCTIONAL POINTERS?);
    //
    // Initialize MPI
    //

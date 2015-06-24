@@ -7,6 +7,8 @@
 #include <time.h>
 // ##################################################################
 
+using namespace CODEVARS;
+
 // ##################################################################
 //
 // march in time (wrapper function)
@@ -19,7 +21,7 @@ void SOLVER::marchInTime(void)
    double  cpuTime = ZERO;
 
    // march one step in time
-   for (n = 0; n < sb->nsteps; n++)
+   for (n = 0; n < nsteps; n++)
    {
       // start the clock
       start = clock();
@@ -44,9 +46,9 @@ void SOLVER::marchInTime(void)
       }
 
       printf(" |  %*d  |  %e |   %e  |  %e  |\n",
-         5,n,sb->L2Norm,sb->LInfNorm,cpuTime );
+         5,n,L2Norm,LInfNorm,cpuTime );
 
-      if (n == sb->nsteps-1)
+      if (n == nsteps-1)
       {
          printf(" --------------------------------------------------------------\n");
          printf(" |   Iter  | L_2 (density) | L_inf (density) | CPU Time (sec) |\n");
@@ -72,7 +74,7 @@ void SOLVER::stepSolution(void)
    // 
    if (strcmp(stepType,"euler") == 0 )
    {
-      if (sb->visc) 
+      if (visc) 
       {
          cout << "Not yet implemented. exit.\n";
          exit(1);
@@ -82,7 +84,7 @@ void SOLVER::stepSolution(void)
          computeRHS("explicit");
 
       coef = 1.;
-      updateSolution(sb->q,sb->q,coef);
+      updateSolution(q,q,coef);
    }
    //
    // Runge - Kutta 3
@@ -92,26 +94,26 @@ void SOLVER::stepSolution(void)
       // RK step 1 
       computeRHS("explicit");
       coef=0.25;
-      updateSolution(sb->q,sb->qt,coef);
+      updateSolution(q,qt,coef);
       coef=8.0/15;
-      updateSolution(sb->q,sb->q,coef);
+      updateSolution(q,q,coef);
 
       // RK step 2 
       computeRHS("explicit");
       coef=5.0/12;
-      updateSolution(sb->qt,sb->q,coef);
+      updateSolution(qt,q,coef);
 
       // RK step 3 
       computeRHS("explicit");
       coef=3.0/4.0;
-      updateSolution(sb->qt,sb->q,coef);
+      updateSolution(qt,q,coef);
    }
    //
    // ADI ( Alternating Direction Implicit)
    //
    else if (strcmp(stepType,"ADI")==0)
    {
-      // if(sb->idual==0)
+      // if(idual==0)
       // {
          computeRHS("implicit");
          ADI();
@@ -120,9 +122,9 @@ void SOLVER::stepSolution(void)
       // {
       //    printf("Error. Dual Time stepping not yet implemented.\n");
       //    exit(1);
-      //    // for (i = 0; i < NQ*mb->nCell; i++) sb->pq[i] = sb->q[i];
+      //    // for (i = 0; i < NQ*mb->nCell; i++) pq[i] = q[i];
 
-      //    // for(k = 0; k < sb->ndual; k++)
+      //    // for(k = 0; k < ndual; k++)
       //    // {
       //    //    DualcomputeRHSk(g,s,l2norm,s->cflnum);
       //    //    DualADI(g,s,s->cflnum,dt);
@@ -148,16 +150,16 @@ void SOLVER::updateSolution(double *qold, double *qnew, double coef)
    //
    m = 0;
    //
-   for(i = 0 ; i < mb->nCell; i++)
+   for(i = 0 ; i < nCell; i++)
    {
       for(j = 0; j < NQ; j++)
       {
-         dtfac    = coef*sb->CFL/sb->sigma[i];
+         dtfac    = coef*CFL/sigma[i];
 
-         if(sb->r[m] != sb->r[m])
-            printf("oops: %d %d %d %lf\n",i,j,mb->nCell,sb->sigma[i] );
+         if(r[m] != r[m])
+            printf("oops: %d %d %d %lf\n",i,j,nCell,sigma[i] );
 
-         qnew[m] = qold[m] + dtfac*sb->r[m];
+         qnew[m] = qold[m] + dtfac*r[m];
          m++;
       } // j loop
    } // i loop

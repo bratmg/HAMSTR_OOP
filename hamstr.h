@@ -10,6 +10,7 @@
 #include "meshBlock.h"
 #include "solnBlock.h"
 #include "solver.h"
+#include "codetypes.h"
 //#include "commBlock.h"
 
 // ##################################################################

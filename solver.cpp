@@ -4,77 +4,78 @@
 //
 // ##################################################################
 #include "solver.h"
-// ##################################################################
+
+using namespace CODEVARS;
 // ##################################################################
 //
 // constuctor
 //
 // ##################################################################
-SOLVER::SOLVER(MESHBLOCK *mb_in, SOLNBLOCK *sb_in)
+SOLVER::SOLVER()
 {
    //
    // variable allocations
    //
    int i,j,workSize;
    //
-   mb       = mb_in;
-   sb       = sb_in;
-   stepType = sb->scheme;
+   // mb       = mb_in;
+   // sb       = sb_in;
+   stepType = scheme;
    //
    // allocation of all the solution arrays
    //
-   sb->q     = new double [NQ*mb->nCell];
-   sb->qt    = new double [NQ*mb->nCell];
-   sb->qtt   = new double [NQ*mb->nCell];
-   sb->r     = new double [NQ*mb->nCell];
-   sb->dq    = new double [NQ*mb->nCell];
-   sb->ddq   = new double [NQ*mb->nCell];
-   sb->ddqb  = new double [NQ*mb->nCell];
-   sb->ddqf  = new double [NQ*mb->nCell];
-   sb->dtac  = new double [mb->nCell];   
-   sb->r0    = new double [NQ*mb->nCell];
-   sb->sigma = new double [mb->nCell];
-   sb->D     = new double** [mb->nCell];
-   sb->ff    = new FACEMAT [mb->nFace];
-   // sb->itag = new int [mb->ncell];
+   q     = new double [NQ*nCell];
+   qt    = new double [NQ*nCell];
+   qtt   = new double [NQ*nCell];
+   r     = new double [NQ*nCell];
+   dq    = new double [NQ*nCell];
+   ddq   = new double [NQ*nCell];
+   ddqb  = new double [NQ*nCell];
+   ddqf  = new double [NQ*nCell];
+   dtac  = new double [nCell];   
+   r0    = new double [NQ*nCell];
+   sigma = new double [nCell];
+   D     = new double** [nCell];
+   ff    = new FACEMAT [nFace];
+   // itag = new int [ncell];
 
-   workSize  =  mb->nMaxChain+5;
-   // sb->cindx = new int [workSize];
-   // sb->ctype = new int [workSize];
-   sb->ql    = new double* [workSize]; 
-   sb->qr    = new double* [workSize]; 
-   sb->dql   = new double* [workSize]; 
-   sb->dqr   = new double* [workSize]; 
-   sb->f     = new double* [workSize]; 
-   sb->fv    = new double* [workSize]; 
-   sb->df    = new double* [workSize]; 
-   sb->f2    = new double* [workSize]; 
-   sb->Q     = new double* [workSize]; 
-   sb->F     = new double* [workSize]; 
-   sb->A     = new double** [workSize];
-   sb->B     = new double** [workSize];
-   sb->C     = new double** [workSize];
+   workSize  =  nMaxChain+5;
+   // cindx = new int [workSize];
+   // ctype = new int [workSize];
+   ql    = new double* [workSize]; 
+   qr    = new double* [workSize]; 
+   dql   = new double* [workSize]; 
+   dqr   = new double* [workSize]; 
+   flux  = new double* [workSize]; 
+   fv    = new double* [workSize]; 
+   df    = new double* [workSize]; 
+   flux2 = new double* [workSize]; 
+   Q     = new double* [workSize]; 
+   F     = new double* [workSize]; 
+   A     = new double** [workSize];
+   B     = new double** [workSize];
+   C     = new double** [workSize];
    //
    for(i=0;i<workSize;i++)
    {
-      sb->ql[i]  = new double [NQ];
-      sb->qr[i]  = new double [NQ];
-      sb->dql[i] = new double [NQ];
-      sb->dqr[i] = new double [NQ];
-      sb->f[i]   = new double [NQ];
-      sb->fv[i]  = new double [NQ];
-      sb->df[i]  = new double [NQ];
-      sb->f2[i]  = new double [NQ];
-      sb->F[i]   = new double [NQ];
-      sb->Q[i]   = new double [NQ];
-      sb->A[i]   = new double* [NQ];
-      sb->B[i]   = new double* [NQ];
-      sb->C[i]   = new double* [NQ];
+      ql[i]   = new double [NQ];
+      qr[i]   = new double [NQ];
+      dql[i]  = new double [NQ];
+      dqr[i]  = new double [NQ];
+      flux[i] = new double [NQ];
+      fv[i]   = new double [NQ];
+      df[i]   = new double [NQ];
+      flux2[i] = new double [NQ];
+      F[i]    = new double [NQ];
+      Q[i]    = new double [NQ];
+      A[i]    = new double* [NQ];
+      B[i]    = new double* [NQ];
+      C[i]    = new double* [NQ];
       for(j=0;j<NQ;j++)
       {
-         sb->A[i][j] = new double[NQ];
-         sb->B[i][j] = new double[NQ];
-         sb->C[i][j] = new double[NQ];
+         A[i][j] = new double[NQ];
+         B[i][j] = new double[NQ];
+         C[i][j] = new double[NQ];
       }
    }
 

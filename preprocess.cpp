@@ -6,6 +6,9 @@
 // ##################################################################
 #include "hamstr.h"
 
+
+using namespace CODEVARS;
+
 #define BOUNDARYLIMIT 3.0
 // ##################################################################
 
@@ -179,13 +182,13 @@ void MESHBLOCK::preprocess(void)
          {
             bFaces[m] = i;
             m++;
-            faces[(2+NFACE)*i + FNODE + 2] = -(sol_visc + 2);
+            faces[(2+NFACE)*i + FNODE + 2] = -(visc + 2);
             icell                          = faces[(2+NFACE)*i+FNODE  ];
             iface                          = faces[(2+NFACE)*i+FNODE+1];
 #ifdef Dim3       
-            neig[6*icell+iface]            = -(sol_visc + 2);
+            neig[6*icell+iface]            = -(visc + 2);
 #else
-            neig[3*icell+iface]            = -(sol_visc + 2);
+            neig[3*icell+iface]            = -(visc + 2);
 #endif
          }
       }
